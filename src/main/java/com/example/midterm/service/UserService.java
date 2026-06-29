@@ -36,7 +36,7 @@ public class UserService {
 
     @Transactional
     public UserResponse createUser(UserRequest request) {
-        log.info("Creating user with email '{}'", request.getEmail());
+        log.debug("Creating user with email '{}'", request.getEmail());
         User user = new User(request.getName(), request.getEmail());
         user = userRepository.save(user);
         usersCreatedCounter.increment();

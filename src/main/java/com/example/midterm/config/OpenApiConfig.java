@@ -12,8 +12,8 @@ public class OpenApiConfig {
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("Midterm API")
-                        .version("1.0")
+                        .title("Task Manager API")
+                        .version("1.0.0")
                         .description("REST API for User and Task management"));
     }
 }

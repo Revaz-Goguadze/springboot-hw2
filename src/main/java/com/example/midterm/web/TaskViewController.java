@@ -5,7 +5,6 @@ import com.example.midterm.dto.TaskResponse;
 import com.example.midterm.service.TaskService;
 import com.example.midterm.service.UserService;
 import jakarta.validation.Valid;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -22,7 +21,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
  * form binds the existing {@link TaskRequest} DTO and renders a user dropdown so
  * the owning user is selected by id.
  */
-@Slf4j
 @Controller
 @RequestMapping("/tasks")
 public class TaskViewController {

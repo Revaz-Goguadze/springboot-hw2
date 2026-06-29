@@ -37,7 +37,7 @@ public class SecurityConfig {
                 // CSRF protects the browser-facing Thymeleaf forms (Thymeleaf injects the
                 // token automatically). The stateless API and the H2 console can't carry a
                 // token, so they are exempted.
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**", "/h2-console/**"))
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**", "/actuator/**", "/h2-console/**"))
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(

@@ -252,7 +252,7 @@ class MidtermApplicationTests {
         var connection = (HttpURLConnection) url.openConnection();
         connection.setInstanceFollowRedirects(false);
 
-        assertThat(connection.getResponseCode()).isIn(302, 401);
+        assertThat(connection.getResponseCode()).isEqualTo(401);
     }
 
     @Test
@@ -268,7 +268,7 @@ class MidtermApplicationTests {
         var connection = (HttpURLConnection) url.openConnection();
         connection.setInstanceFollowRedirects(false);
 
-        assertThat(connection.getResponseCode()).isIn(302, 401);
+        assertThat(connection.getResponseCode()).isEqualTo(401);
     }
 
     @Test

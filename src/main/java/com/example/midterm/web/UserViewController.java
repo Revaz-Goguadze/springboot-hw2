@@ -4,7 +4,6 @@ import com.example.midterm.dto.UserRequest;
 import com.example.midterm.dto.UserResponse;
 import com.example.midterm.service.UserService;
 import jakarta.validation.Valid;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -22,7 +21,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
  * binding ({@code th:object}/{@code th:field}) and Bean Validation
  * ({@code @Valid} + {@link BindingResult}) drive the forms.
  */
-@Slf4j
 @Controller
 @RequestMapping("/users")
 public class UserViewController {
