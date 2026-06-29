@@ -6,7 +6,10 @@ import com.example.midterm.dto.UserResponse;
 import com.example.midterm.entity.User;
 import com.example.midterm.exception.ResourceNotFoundException;
 import com.example.midterm.repository.UserRepository;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,10 +23,15 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final AppSettings settings;
+    /** Custom Micrometer metric, scrapeable at /actuator/metrics/users.created. */
+    private final Counter usersCreatedCounter;
 
-    public UserService(UserRepository userRepository, AppSettings settings) {
+    public UserService(UserRepository userRepository, AppSettings settings, MeterRegistry meterRegistry) {
         this.userRepository = userRepository;
         this.settings = settings;
+        this.usersCreatedCounter = Counter.builder("users.created")
+                .description("Total number of users created")
+                .register(meterRegistry);
     }
 
     @Transactional
@@ -31,15 +39,18 @@ public class UserService {
         log.info("Creating user with email '{}'", request.getEmail());
         User user = new User(request.getName(), request.getEmail());
         user = userRepository.save(user);
+        usersCreatedCounter.increment();
         log.info("Created user id={}", user.getId());
         return toResponse(user);
     }
 
     public List<UserResponse> getAllUsers() {
-        // app.settings.pagination-limit caps list size; the value differs per profile
-        log.debug("Listing users, capped at paginationLimit={}", settings.getPaginationLimit());
-        return userRepository.findAll().stream()
-                .limit(settings.getPaginationLimit())
+        // app.settings.pagination-limit caps list size; the value differs per profile.
+        // The cap is pushed to the database (SQL LIMIT via Pageable) rather than
+        // loading the whole table and trimming in memory.
+        int limit = settings.getPaginationLimit();
+        log.debug("Listing users, capped at paginationLimit={}", limit);
+        return userRepository.findAll(PageRequest.of(0, limit)).stream()
                 .map(this::toResponse)
                 .toList();
     }

@@ -1,205 +1,206 @@
-# Spring Boot HW2 — Configuration, Profiles, i18n & Structured Logging
+# Task Manager REST API — Spring Boot Final Project
 
-REST API for User and Task management, extending the HW1 (Spring Security) project with
-externalized configuration & Spring Profiles, multi-language API responses (i18n), and
-structured file logging.
+Production-leaning REST API for managing **Users** and their **Tasks**, built up across the
+semester (Midterm → Security → Configuration/Profiles/i18n/Logging) and finalized here with
+**automated testing**, **Actuator monitoring**, and quality/logging improvements.
 
-## Tech Stack
+All previously implemented functionality remains intact:
+Layered architecture (Controller → Service → Repository), CRUD REST API, JPA persistence,
+DTOs, Bean Validation, global exception handling, Swagger/OpenAPI, Spring Security
+(authentication + role authorization), Spring Profiles, externalized configuration, and
+internationalization (English / Georgian).
 
-- Java 21 / Spring Boot 3.4.4
-- Maven
-- Spring Data JPA — H2 (dev) / PostgreSQL (prod)
-- Spring Security (in-memory users, BCrypt, HTTP Basic + form login)
-- Bean Validation (JSR-303)
+---
+
+## Technologies
+
+- **Java 21**, **Spring Boot 3.4.4**, **Maven**
+- Spring Web (REST), Spring Data JPA
+- **H2** (dev / default, in-memory) · **PostgreSQL** (prod)
+- Spring Security (in-memory users, BCrypt, HTTP Basic + form login, method security)
+- Bean Validation (JSR-303 / Hibernate Validator)
 - SpringDoc OpenAPI (Swagger UI)
-- SLF4J via Lombok `@Slf4j` + Logback (rolling file appender)
+- **SLF4J + Logback** (`@Slf4j`), rolling file appender
+- **Spring Boot Actuator** + **Micrometer** (Prometheus registry)
+- **Testing:** JUnit 5, Mockito, Spring Boot Test, `@WebMvcTest`, `@DataJpaTest`, MockMvc,
+  spring-security-test, **JaCoCo** coverage
 
-## Quick Start
+---
+
+## Running the application
+
+Default (no profile → in-memory H2, INFO logging):
 
 ```bash
-# default (neutral) configuration — in-memory H2, no seed data, INFO logging
 ./mvnw spring-boot:run
 ```
 
-The app starts at `http://localhost:8080`. Swagger UI: `http://localhost:8080/swagger-ui.html`.
+App: `http://localhost:8080` · Swagger UI: `http://localhost:8080/swagger-ui.html`
+
+Packaged jar:
+
+```bash
+./mvnw clean package
+java -jar target/midterm-0.0.1-SNAPSHOT.jar
+```
 
 ---
 
-## 1. Profiles — how to run `dev` vs `prod`
+## Profile configuration
 
-Two profiles are defined via `application-dev.properties` and `application-prod.properties`
-(the shared base lives in `application.properties`).
+Shared base lives in `application.properties`; overrides in `application-{dev,prod}.properties`.
 
 | Profile | Database | Seed data | SQL echo | Log level (`com.example.midterm`) |
 |---------|----------|-----------|----------|-----------------------------------|
-| `dev`   | In-memory **H2** (`jdbc:h2:mem:devdb`) | Yes (`DataInitializer`) | on | `DEBUG` |
-| `prod`  | **PostgreSQL** (persistent) | No | off | `WARN` |
-
-### Run with the `dev` profile
+| *(none)* | In-memory H2 (`jdbc:h2:mem:midterm`) | No | off | `INFO` |
+| `dev`   | In-memory H2 (`jdbc:h2:mem:devdb`) | Yes (`DataInitializer`) | on | `DEBUG` |
+| `prod`  | PostgreSQL (persistent) | No | off | `WARN` |
 
 ```bash
-# Maven
+# dev
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
-
-# Packaged jar
 java -jar target/midterm-0.0.1-SNAPSHOT.jar --spring.profiles.active=dev
-```
 
-### Run with the `prod` profile
-
-`prod` expects a real PostgreSQL database. Provide credentials via environment variables.
-`DB_PASSWORD` has **no default** — prod fails fast if it is missing (`DB_URL`/`DB_USERNAME`
-have sensible non-secret defaults):
-
-```bash
+# prod — DB_PASSWORD has NO default (fails fast if missing)
 export DB_URL=jdbc:postgresql://localhost:5432/taskmanager
 export DB_USERNAME=taskmanager
 export DB_PASSWORD=yourpassword
-
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=prod
-# or
-java -jar target/midterm-0.0.1-SNAPSHOT.jar --spring.profiles.active=prod
 ```
 
-### From an IDE (IntelliJ / Eclipse / VS Code)
+### Externalized custom configuration (`app.settings.*`)
 
-Set the active profile on the run configuration, e.g. the VM option
-`-Dspring.profiles.active=dev`, or the environment variable `SPRING_PROFILES_ACTIVE=dev`.
+Bound to `config/AppSettings.java` (`@ConfigurationProperties` + `@Validated`), validated at
+startup. Reflected on `GET /api/info` and used to cap list sizes (`pagination-limit`).
+
+| Property | Type | Validation | dev / prod |
+|----------|------|------------|------------|
+| `app.settings.title` | String | `@NotBlank` | "Task Manager API (DEV)" / "Task Manager API" |
+| `app.settings.pagination-limit` | int | `@Min(1)` | 10 / 50 |
+| `app.settings.contact-email` | String | `@NotBlank @Email` | dev-team@… / support@… |
+| `app.settings.registration-enabled` | boolean | — | true / false |
 
 ---
 
-## 2. Custom Configuration Properties
+## User credentials and roles
 
-Defined in `config/AppSettings.java` — a `@ConfigurationProperties(prefix = "app.settings")`
-POJO, validated at startup with JSR-303 constraints + `@Validated`. Values are supplied
-per-profile and injected into `InfoController`.
+In-memory users (BCrypt-hashed), HTTP Basic:
 
-| Property | Type | Validation | Role |
-|----------|------|------------|------|
-| `app.settings.title` | String | `@NotBlank` | Application title shown on metadata endpoint |
-| `app.settings.pagination-limit` | int | `@Min(1)` | Caps the number of items returned by `GET /api/users` and `GET /api/tasks` |
-| `app.settings.contact-email` | String | `@NotBlank`, `@Email` | Support contact address |
-| `app.settings.registration-enabled` | boolean | — | Feature flag advertising self-service registration |
+| Username | Password   | Roles           |
+|----------|------------|-----------------|
+| `user`   | `user123`  | `USER`          |
+| `admin`  | `admin123` | `USER`, `ADMIN` |
 
-Injection is demonstrated in two places:
+**Authorization rules**
 
-- **`GET /api/info`** (`InfoController`) — the response reflects the active profile's values;
-- **`UserService` / `TaskService`** — `pagination-limit` caps the size of the lists returned
-  by `GET /api/users` and `GET /api/tasks` (10 items under `dev`, 50 under `prod`).
+- Public: `/api/info`, Swagger (`/swagger-ui/**`, `/v3/api-docs/**`),
+  `/actuator/health`, `/actuator/info`.
+- Authenticated (`USER`): all other `/api/**` (CRUD on users/tasks), `/api/me`.
+- `ADMIN` only: `DELETE /api/users/**`, `DELETE /api/tasks/**`, `/h2-console/**`,
+  and every Actuator endpoint except health/info (metrics, prometheus, …).
+  `DELETE` is also enforced at the service layer with `@PreAuthorize("hasRole('ADMIN')")`.
 
-```bash
-curl http://localhost:8080/api/info
-# {"message":"Welcome to Task Manager API (DEV)","title":"Task Manager API (DEV)",
-#  "paginationLimit":10,"contactEmail":"dev-team@example.com",
-#  "registrationEnabled":true,"activeProfiles":["dev"]}
-```
-
-If any constraint is violated (e.g. a blank title or non-email contact), the application
-**fails to start** with a clear binding/validation error.
-
----
-
-## 3. Internationalization (i18n)
-
-Message bundles under `src/main/resources` (UTF-8):
-
-- `messages.properties` — default (English fallback)
-- `messages_en.properties` — English
-- `messages_ka.properties` — Georgian (ქართული)
-
-Locale is resolved per request from the standard **`Accept-Language`** HTTP header via an
-`AcceptHeaderLocaleResolver` bean (`config/I18nConfig.java`); English is the default.
-
-### What is internationalized
-
-| Where | Keys | Notes |
-|-------|------|-------|
-| `GET /api/info` welcome message | `app.welcome` | Injected via `MessageSource` |
-| `404` not-found payload | `error.notfound`, `error.notfound.title` | In `@RestControllerAdvice` |
-| `400` validation payload titles | `error.validation.title`, `error.badrequest.title` | In `@RestControllerAdvice` |
-| Field validation messages | `user.name.*`, `user.email.*`, `task.title.*` | Referenced from DTO constraints with the `{key}` syntax |
-
-The `MessageSource` is wired into the Bean Validation interpolator
-(`LocalValidatorFactoryBean` in `I18nConfig`), so DTO constraint messages like
-`@NotBlank(message = "{user.name.required}")` resolve from the same bundles.
-
-### How to test
-
-```bash
-# English (default)
-curl -H "Accept-Language: en" http://localhost:8080/api/info
-
-# Georgian
-curl -H "Accept-Language: ka" http://localhost:8080/api/info
-# {"message":"კეთილი იყოს თქვენი მობრძანება Task Manager API (DEV)-ში", ...}
-
-# Localized validation errors (Georgian)
-curl -u admin:admin123 -H "Content-Type: application/json" -H "Accept-Language: ka" \
-     -d '{"name":"","email":"bad"}' http://localhost:8080/api/users
-# {"fieldErrors":{"name":"სახელის მითითება სავალდებულოა","email":"ელფოსტა უნდა იყოს ვალიდური"}, ...}
-
-# Localized 404 (Georgian)
-curl -u admin:admin123 -H "Accept-Language: ka" http://localhost:8080/api/users/99999
-# {"error":"ვერ მოიძებნა","message":"User ვერ მოიძებნა id-ით: 99999", ...}
-```
-
----
-
-## 4. Structured Logging
-
-- **SLF4J via Lombok's `@Slf4j`** in 5 components: `UserService`, `TaskService`,
-  `InfoController`, `DataInitializer`, and `GlobalExceptionHandler`.
-- Proper levels: `DEBUG` (troubleshooting), `INFO` (business events — user/task creation),
-  `WARN` (not-found / validation failures).
-- **Parameterized** logging only — e.g. `log.info("Created user id={}", user.getId());`
-  (no string concatenation).
-- **Profile-driven levels** via `logback-spring.xml` `<springProfile>` blocks:
-  `dev` → `DEBUG`, `prod` → `WARN`, otherwise `INFO`.
-
-### Log file location
-
-```
-logs/app.log
-```
-
-Configured in `src/main/resources/logback-spring.xml` with a `RollingFileAppender` using a
-`SizeAndTimeBasedRollingPolicy` (daily rotation, 10 MB per file, 7 days history, 100 MB cap).
-Rolled files are named `logs/app.YYYY-MM-DD.N.log`. Logs are written to the file **and** the
-console simultaneously.
-
----
-
-## Security (carried over from HW1)
-
-In-memory users with BCrypt-hashed passwords:
-
-| Username | Password   | Roles            |
-|----------|------------|------------------|
-| `user`   | `user123`  | `USER`           |
-| `admin`  | `admin123` | `USER`, `ADMIN`  |
-
-Public endpoints: `/`, `/api/info`, `/swagger-ui.html`, `/swagger-ui/**`, `/v3/api-docs/**`.
-All other `/api/**` endpoints require authentication. `DELETE /api/users/**`,
-`DELETE /api/tasks/**` and `/h2-console/**` require the `ADMIN` role (also enforced at the
-service layer with `@PreAuthorize`).
-
-## API Endpoints
+### Main API endpoints
 
 | Method | Path | Description | Auth |
 |--------|------|-------------|------|
-| GET    | `/api/info` | App metadata & config (i18n) | public |
-| GET    | `/api/me` | Authenticated user's profile | authenticated |
+| GET | `/api/info` | App metadata & config (i18n) | public |
+| GET | `/api/me` | Current user's profile | authenticated |
 | POST/GET/PUT/DELETE | `/api/users[/{id}]` | User CRUD | authenticated (DELETE = ADMIN) |
 | POST/GET/PUT/DELETE | `/api/tasks[/{id}]` | Task CRUD | authenticated (DELETE = ADMIN) |
 
-## Tests
+---
+
+## Monitoring (Actuator)
+
+Exposed at `/actuator/*` (configured in `application.properties`):
+
+| Endpoint | Access | Purpose |
+|----------|--------|---------|
+| `/actuator/health` | public | Liveness; aggregates db, diskSpace, ping, ssl + **custom `users`** indicator |
+| `/actuator/info` | public | App name/version + build (Maven `build-info`) + Java/OS details |
+| `/actuator/metrics` | ADMIN | Micrometer metrics (incl. custom **`users.created`** counter) |
+| `/actuator/prometheus` | ADMIN | Prometheus scrape format |
 
 ```bash
-./mvnw test
+curl localhost:8080/actuator/health
+curl localhost:8080/actuator/info
+curl -u admin:admin123 localhost:8080/actuator/health          # full component details
+curl -u admin:admin123 localhost:8080/actuator/metrics/users.created
+curl -u admin:admin123 localhost:8080/actuator/prometheus
 ```
 
-37 integration tests covering CRUD, validation (400), missing resources (404),
-authentication, role authorization, BCrypt storage, method security, i18n
-(`Accept-Language`-driven responses and localized validation/404 payloads —
-`I18nAndConfigTests`), the `pagination-limit` cap, and dev-profile behavior
-(seed data, dev configuration values — `DevProfileTests`).
+- **Custom health indicator** — `monitoring/UsersHealthIndicator` reports UP + current user
+  count, DOWN if the user table is unreachable.
+- **Custom metric** — `users.created` (Micrometer `Counter`) incremented on each user creation.
+- Health detail visibility is `when-authorized`: anonymous callers see only `{"status":"UP"}`.
+
+---
+
+## Logging configuration
+
+- **SLF4J via Lombok `@Slf4j`** in `UserService`, `TaskService`, `InfoController`,
+  `DataInitializer`, `GlobalExceptionHandler`.
+- **Levels:** `DEBUG` (diagnostics), `INFO` (business events), `WARN` (not-found / validation),
+  `ERROR` (unexpected failures in the global handler).
+- **Parameterized** only — e.g. `log.info("Created user id={}", user.getId());`.
+- **Console + file**: file at `logs/app.log` (`src/main/resources/logback-spring.xml`).
+- **Rolling policy** — `SizeAndTimeBasedRollingPolicy`: daily, 10 MB/file, 7 days history,
+  100 MB cap (`logs/app.YYYY-MM-DD.N.log`).
+- **Profile-specific levels** via `<springProfile>`: `dev` → DEBUG, `prod` → WARN, otherwise INFO.
+
+---
+
+## Testing
+
+```bash
+./mvnw test                 # run all tests
+./mvnw clean verify         # tests + JaCoCo coverage report
+```
+
+JaCoCo HTML report: `target/site/jacoco/index.html`. Latest run: **90% instruction**,
+**89% line** coverage (348/390 lines).
+
+**84 tests**, covering positive and negative scenarios:
+
+| Suite | Type | Scope |
+|-------|------|-------|
+| `service/UserServiceTest`, `service/TaskServiceTest` | **Unit** (JUnit + Mockito) | Service logic with mocked repositories; not-found paths; custom metric; **parameterized** pagination cap |
+| `controller/UserControllerWebMvcTest` | **Web slice** (`@WebMvcTest` + MockMvc) | HTTP status/JSON, security (401 anon, 403 admin-only DELETE, 204 admin), 201 create, **parameterized** 400 validation, 404, 400 type-mismatch, 400 `@Min` path |
+| `controller/TaskControllerWebMvcTest` | **Web slice** (`@WebMvcTest` + MockMvc) | Mirrors the user slice: 401/403/204 auth, 201 create, **parameterized** 400 validation, 404, 400 type-mismatch, 400 `@Min` path |
+| `controller/AuthControllerWebMvcTest` | **Web slice** (`@WebMvcTest` + MockMvc) | `/api/me`: 401 anon, authenticated principal name + roles |
+| `repository/UserRepositoryDataJpaTest`, `repository/TaskRepositoryDataJpaTest` | **Repository slice** (`@DataJpaTest`) | Persistence; User↔Task relationship + cascade/orphanRemoval; empty result for missing id |
+| `MidtermApplicationTests`, `I18nAndConfigTests`, `DevProfileTests` | **Integration** (`@SpringBootTest`) | Full-context CRUD, auth/roles, BCrypt, i18n, config injection, dev-profile seeding |
+| `ActuatorSmokeTest` | **Integration** (`@SpringBootTest`) | Actuator: public health (UP) / info, ADMIN-only metrics (403 user / 200 admin), custom `users.created` counter |
+
+> Note: `pom.xml` sets `net.bytebuddy.experimental=true` for Surefire so Mockito can mock
+> concrete classes on very new JDKs. It is a no-op on the officially supported JDK 21.
+
+---
+
+## Internationalization
+
+Locale resolved per request from the `Accept-Language` header
+(`AcceptHeaderLocaleResolver`, default English). Bundles: `messages[_en|_ka].properties` (UTF-8).
+Localized: `/api/info` greeting, validation messages, and error envelopes (404/400/500).
+
+```bash
+curl -H "Accept-Language: ka" localhost:8080/api/info
+curl -u admin:admin123 -H "Accept-Language: ka" localhost:8080/api/users/99999   # localized 404
+```
+
+---
+
+## Project structure
+
+```
+config/       SecurityConfig, AppSettings, I18nConfig, OpenApiConfig, DataInitializer
+controller/   UserController, TaskController, InfoController, AuthController
+service/       UserService, TaskService
+repository/    UserRepository, TaskRepository
+entity/        User, Task
+dto/           *Request / *Response
+exception/     GlobalExceptionHandler, ResourceNotFoundException
+monitoring/    UsersHealthIndicator   (custom Actuator health)
+resources/     application*.properties, messages*.properties, logback-spring.xml
+```

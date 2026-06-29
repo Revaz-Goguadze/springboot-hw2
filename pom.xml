@@ -15,7 +15,7 @@
     <artifactId>midterm</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>midterm</name>
-    <description>Spring Boot HW2 — Configuration, Profiles, i18n and Structured Logging</description>
+    <description>Spring Boot Final Project — Task Manager REST API (Security, Profiles, i18n, Logging, Testing, Actuator)</description>
 
     <properties>
         <java.version>21</java.version>
@@ -45,6 +45,19 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <!-- Actuator — production monitoring (health, info, metrics) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!-- Micrometer Prometheus registry — /actuator/prometheus scrape endpoint -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+            <scope>runtime</scope>
         </dependency>
 
         <!-- H2 Database (dev profile, in-memory) -->
@@ -102,6 +115,48 @@
                         </exclude>
                     </excludes>
                 </configuration>
+                <executions>
+                    <!-- Generate build-info.properties so /actuator/info reports build details -->
+                    <execution>
+                        <goals>
+                            <goal>build-info</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Surefire — enable Byte Buddy experimental so Mockito can mock
+                 concrete classes on newer JDKs (no-op on the officially supported JDK 21). -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <systemPropertyVariables>
+                        <net.bytebuddy.experimental>true</net.bytebuddy.experimental>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+
+            <!-- JaCoCo — code coverage report at target/site/jacoco/index.html -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.12</version>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

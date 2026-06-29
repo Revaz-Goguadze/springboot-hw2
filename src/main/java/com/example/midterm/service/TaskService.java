@@ -9,6 +9,7 @@ import com.example.midterm.exception.ResourceNotFoundException;
 import com.example.midterm.repository.TaskRepository;
 import com.example.midterm.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,10 +48,12 @@ public class TaskService {
     }
 
     public List<TaskResponse> getAllTasks() {
-        // app.settings.pagination-limit caps list size; the value differs per profile
-        log.debug("Listing tasks, capped at paginationLimit={}", settings.getPaginationLimit());
-        return taskRepository.findAll().stream()
-                .limit(settings.getPaginationLimit())
+        // app.settings.pagination-limit caps list size; the cap is pushed to the
+        // database (SQL LIMIT via Pageable) rather than loading the whole table
+        // and trimming in memory. Mirrors UserService.getAllUsers().
+        int limit = settings.getPaginationLimit();
+        log.debug("Listing tasks, capped at paginationLimit={}", limit);
+        return taskRepository.findAll(PageRequest.of(0, limit)).stream()
                 .map(this::toResponse)
                 .toList();
     }
