@@ -12,9 +12,9 @@
     </parent>
 
     <groupId>com.example</groupId>
-    <artifactId>midterm</artifactId>
+    <artifactId>task-manager</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>midterm</name>
+    <name>Task Manager API</name>
     <description>Spring Boot Final Project — Task Manager REST API (Security, Profiles, i18n, Logging, Testing, Actuator)</description>
 
     <properties>

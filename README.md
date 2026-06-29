@@ -68,7 +68,7 @@ Packaged jar:
 
 ```bash
 ./mvnw clean package
-java -jar target/midterm-0.0.1-SNAPSHOT.jar
+java -jar target/task-manager-0.0.1-SNAPSHOT.jar
 ```
 
 ---
@@ -77,16 +77,16 @@ java -jar target/midterm-0.0.1-SNAPSHOT.jar
 
 Shared base lives in `application.properties`; overrides in `application-{dev,prod}.properties`.
 
-| Profile | Database | Seed data | SQL echo | Log level (`com.example.midterm`) |
+| Profile | Database | Seed data | SQL echo | Log level (`com.example.taskmanager`) |
 |---------|----------|-----------|----------|-----------------------------------|
-| *(none)* | In-memory H2 (`jdbc:h2:mem:midterm`) | No | off | `INFO` |
+| *(none)* | In-memory H2 (`jdbc:h2:mem:taskmanager`) | No | off | `INFO` |
 | `dev`   | In-memory H2 (`jdbc:h2:mem:devdb`) | Yes (`DataInitializer`) | on | `DEBUG` |
 | `prod`  | PostgreSQL (persistent) | No | off | `WARN` |
 
 ```bash
 # dev
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
-java -jar target/midterm-0.0.1-SNAPSHOT.jar --spring.profiles.active=dev
+java -jar target/task-manager-0.0.1-SNAPSHOT.jar --spring.profiles.active=dev
 
 # prod — DB_PASSWORD has NO default (fails fast if missing)
 export DB_URL=jdbc:postgresql://localhost:5432/taskmanager
@@ -198,7 +198,7 @@ JaCoCo HTML report: `target/site/jacoco/index.html`. Latest run: **86% instructi
 | `controller/AuthControllerWebMvcTest` | **Web slice** (`@WebMvcTest` + MockMvc) | `/api/me`: 401 anon, authenticated principal name + roles |
 | `web/UserViewControllerTest`, `web/TaskViewControllerTest` | **Web slice** (`@WebMvcTest` + MockMvc) | Thymeleaf UI: view resolution, model binding, validation re-render with field errors, CSRF, login redirect for anon, admin-only DELETE (403/redirect) |
 | `repository/UserRepositoryDataJpaTest`, `repository/TaskRepositoryDataJpaTest` | **Repository slice** (`@DataJpaTest`) | Persistence; User↔Task relationship + cascade/orphanRemoval; empty result for missing id |
-| `MidtermApplicationTests`, `I18nAndConfigTests`, `DevProfileTests` | **Integration** (`@SpringBootTest`) | Full-context CRUD, auth/roles, BCrypt, i18n, config injection, dev-profile seeding |
+| `TaskManagerApplicationTests`, `I18nAndConfigTests`, `DevProfileTests` | **Integration** (`@SpringBootTest`) | Full-context CRUD, auth/roles, BCrypt, i18n, config injection, dev-profile seeding |
 | `ActuatorSmokeTest` | **Integration** (`@SpringBootTest`) | Actuator: public health (UP) / info, ADMIN-only metrics (403 user / 200 admin), custom `users.created` counter |
 
 > Note: `pom.xml` sets `net.bytebuddy.experimental=true` for Surefire so Mockito can mock

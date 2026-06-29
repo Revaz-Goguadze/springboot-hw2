@@ -32,7 +32,7 @@
 
     <!-- Profile-driven log levels for the application package -->
     <springProfile name="dev">
-        <logger name="com.example.midterm" level="DEBUG"/>
+        <logger name="com.example.taskmanager" level="DEBUG"/>
         <root level="INFO">
             <appender-ref ref="CONSOLE"/>
             <appender-ref ref="FILE"/>
@@ -40,7 +40,7 @@
     </springProfile>
 
     <springProfile name="prod">
-        <logger name="com.example.midterm" level="WARN"/>
+        <logger name="com.example.taskmanager" level="WARN"/>
         <root level="WARN">
             <appender-ref ref="CONSOLE"/>
             <appender-ref ref="FILE"/>
@@ -49,7 +49,7 @@
 
     <!-- Fallback when no profile is active -->
     <springProfile name="!dev &amp; !prod">
-        <logger name="com.example.midterm" level="INFO"/>
+        <logger name="com.example.taskmanager" level="INFO"/>
         <root level="INFO">
             <appender-ref ref="CONSOLE"/>
             <appender-ref ref="FILE"/>
