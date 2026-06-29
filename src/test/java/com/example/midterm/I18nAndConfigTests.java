@@ -116,4 +116,30 @@ class I18nAndConfigTests {
         ResponseEntity<Map> response = rest.getForEntity("/api/info", Map.class);
         assertThat(response.getBody().get("paginationLimit")).isEqualTo(2);
     }
+
+    // --- i18n: error/validation messages externalized to the bundles are localized ---
+
+    @Test
+    void typeMismatchMessageIsLocalizedToGeorgian() {
+        // /api/users/{id} with a non-numeric id -> MethodArgumentTypeMismatch -> error.badrequest.param
+        ResponseEntity<Map> response = adminRest().exchange("/api/users/not-a-number", HttpMethod.GET,
+                new HttpEntity<>(georgian()), Map.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat((String) response.getBody().get("message")).contains("მნიშვნელობა არასწორია");
+    }
+
+    @Test
+    void taskValidationMessageIsLocalizedToGeorgian() {
+        HttpHeaders headers = georgian();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        // omit userId -> @NotNull{task.userId.required}
+        var body = Map.of("title", "Valid title", "completed", true);
+
+        ResponseEntity<Map> response = adminRest().exchange("/api/tasks", HttpMethod.POST,
+                new HttpEntity<>(body, headers), Map.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        Map<String, String> fieldErrors = (Map<String, String>) response.getBody().get("fieldErrors");
+        assertThat(fieldErrors.get("userId")).isEqualTo("მომხმარებლის ID სავალდებულოა");
+    }
 }

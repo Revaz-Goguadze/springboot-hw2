@@ -10,13 +10,13 @@ public class TaskRequest {
     @Size(min = 2, max = 150, message = "{task.title.size}")
     private String title;
 
-    @Size(max = 1000, message = "Description must be at most 1000 characters")
+    @Size(max = 1000, message = "{task.description.size}")
     private String description;
 
-    @NotNull(message = "Completed flag is required")
+    @NotNull(message = "{task.completed.required}")
     private Boolean completed;
 
-    @NotNull(message = "User ID is required")
+    @NotNull(message = "{task.userId.required}")
     private Long userId;
 
     public TaskRequest() {

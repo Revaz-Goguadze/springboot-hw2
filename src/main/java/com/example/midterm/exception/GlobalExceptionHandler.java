@@ -86,7 +86,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
         log.warn("400 Bad Request: parameter '{}' has an invalid value '{}'", ex.getName(), ex.getValue());
         return error(HttpStatus.BAD_REQUEST, msg("error.badrequest.title"),
-                "Invalid value for parameter '" + ex.getName() + "'");
+                msg("error.badrequest.param", ex.getName()));
     }
 
     /**
@@ -96,7 +96,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<Map<String, Object>> handleNoResource(NoResourceFoundException ex) {
         log.warn("404 Not Found: {}", ex.getMessage());
-        return error(HttpStatus.NOT_FOUND, msg("error.notfound.title"), "No endpoint for this request");
+        return error(HttpStatus.NOT_FOUND, msg("error.notfound.title"), msg("error.notfound.noendpoint"));
     }
 
     /**

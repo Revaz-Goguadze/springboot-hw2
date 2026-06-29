@@ -178,9 +178,9 @@ curl -u admin:admin123 localhost:8080/actuator/prometheus
 ```
 
 JaCoCo HTML report: `target/site/jacoco/index.html`. Latest run: **85% instruction**,
-**86% line** coverage (405/473 lines).
+**85% line** coverage (395/464 lines).
 
-**97 tests**, covering positive and negative scenarios:
+**99 tests**, covering positive and negative scenarios:
 
 | Suite | Type | Scope |
 |-------|------|-------|
