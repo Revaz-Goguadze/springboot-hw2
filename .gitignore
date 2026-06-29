@@ -6,3 +6,6 @@ logs/
 .vscode/
 .DS_Store
 .env
+
+# Assignment brief — kept locally, not part of the submission repo
+FINAL_REQUIREMENTS.md
