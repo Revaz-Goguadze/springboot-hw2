@@ -1,0 +1,39 @@
+:root { --fg: #1f2933; --muted: #616e7c; --line: #d9e2ec; --accent: #2b6cb0; --danger: #c53030; }
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; color: var(--fg); }
+
+.nav { display: flex; align-items: center; gap: 1rem; padding: .75rem 1.25rem; background: #f5f7fa; border-bottom: 1px solid var(--line); }
+.nav a { color: var(--accent); text-decoration: none; font-weight: 500; }
+.nav .spacer { flex: 1; }
+.nav .who { color: var(--muted); }
+.logout-form { margin: 0; }
+.logout-form button { background: none; border: 1px solid var(--line); border-radius: 4px; padding: .25rem .6rem; cursor: pointer; }
+
+.container { max-width: 880px; margin: 2rem auto; padding: 0 1.25rem; }
+.container.narrow { max-width: 460px; }
+h1 { margin-top: 0; }
+
+.header-row { display: flex; align-items: center; justify-content: space-between; }
+.cards { list-style: none; padding: 0; display: flex; gap: 1rem; flex-wrap: wrap; }
+.cards a { display: block; padding: 1rem 1.5rem; border: 1px solid var(--line); border-radius: 8px; text-decoration: none; color: var(--accent); }
+
+table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+th, td { text-align: left; padding: .6rem .5rem; border-bottom: 1px solid var(--line); }
+.actions { display: flex; gap: .75rem; align-items: center; }
+.inline { display: inline; margin: 0; }
+.empty { color: var(--muted); text-align: center; }
+
+label { display: block; margin-bottom: 1rem; }
+label > span { display: block; margin-bottom: .25rem; font-weight: 500; }
+label.checkbox { display: flex; align-items: center; gap: .5rem; }
+label.checkbox > span { margin: 0; }
+input, textarea, select { width: 100%; padding: .5rem; border: 1px solid var(--line); border-radius: 4px; font: inherit; }
+label.checkbox input { width: auto; }
+
+button, .btn { background: var(--accent); color: #fff; border: none; border-radius: 4px; padding: .5rem .9rem; cursor: pointer; text-decoration: none; display: inline-block; }
+.btn-secondary { background: #fff; color: var(--fg); border: 1px solid var(--line); border-radius: 4px; padding: .5rem .9rem; text-decoration: none; }
+.danger { background: var(--danger); }
+.form-actions { display: flex; gap: .75rem; align-items: center; }
+
+.error { color: var(--danger); font-size: .85rem; display: block; margin-top: .25rem; }
+.info { color: var(--accent); }

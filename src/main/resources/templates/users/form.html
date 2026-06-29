@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(#{user.list.title})}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="container narrow">
+    <h1 th:text="${editing} ? #{user.edit} : #{user.new}">User</h1>
+
+    <form th:action="@{${formAction}}" th:object="${user}" method="post">
+        <input type="hidden" name="_method" value="put" th:if="${editing}"/>
+
+        <label>
+            <span th:text="#{field.name}">Name</span>
+            <input type="text" th:field="*{name}"/>
+            <span class="error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}">name error</span>
+        </label>
+
+        <label>
+            <span th:text="#{field.email}">Email</span>
+            <input type="text" th:field="*{email}"/>
+            <span class="error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}">email error</span>
+        </label>
+
+        <div class="form-actions">
+            <button type="submit" th:text="#{action.save}">Save</button>
+            <a class="btn-secondary" th:href="@{/users}" th:text="#{action.cancel}">Cancel</a>
+        </div>
+    </form>
+</main>
+</body>
+</html>

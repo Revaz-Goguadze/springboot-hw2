@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title th:text="${title}">Task Manager</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}"/>
+</head>
+<body>
+
+<nav th:fragment="nav" class="nav">
+    <a th:href="@{/}" th:text="#{nav.home}">Home</a>
+    <a th:href="@{/users}" th:text="#{nav.users}">Users</a>
+    <a th:href="@{/tasks}" th:text="#{nav.tasks}">Tasks</a>
+    <a th:href="@{/swagger-ui.html}">API</a>
+    <span class="spacer"></span>
+    <span sec:authorize="isAuthenticated()" class="who">
+        <span sec:authentication="name">user</span>
+    </span>
+    <form th:action="@{/logout}" method="post" sec:authorize="isAuthenticated()" class="logout-form">
+        <button type="submit" th:text="#{nav.logout}">Logout</button>
+    </form>
+</nav>
+
+</body>
+</html>

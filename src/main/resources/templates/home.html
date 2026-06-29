@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(#{app.title})}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="container">
+    <h1 th:text="#{app.title}">Task Manager</h1>
+    <p th:text="#{home.intro}">Manage users and tasks.</p>
+    <ul class="cards">
+        <li><a th:href="@{/users}" th:text="#{nav.users}">Users</a></li>
+        <li><a th:href="@{/tasks}" th:text="#{nav.tasks}">Tasks</a></li>
+        <li><a th:href="@{/swagger-ui.html}">Swagger / API</a></li>
+    </ul>
+</main>
+</body>
+</html>

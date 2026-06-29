@@ -16,8 +16,9 @@ internationalization (English / Georgian).
 
 - **Java 21**, **Spring Boot 3.4.4**, **Maven**
 - Spring Web (REST), Spring Data JPA
+- **Thymeleaf** server-rendered UI (forms with data binding, Spring Security dialect)
 - **H2** (dev / default, in-memory) · **PostgreSQL** (prod)
-- Spring Security (in-memory users, BCrypt, HTTP Basic + form login, method security)
+- Spring Security (in-memory users, BCrypt, HTTP Basic for the API + form login for the UI, method security)
 - Bean Validation (JSR-303 / Hibernate Validator)
 - SpringDoc OpenAPI (Swagger UI)
 - **SLF4J + Logback** (`@Slf4j`), rolling file appender
@@ -35,7 +36,25 @@ Default (no profile → in-memory H2, INFO logging):
 ./mvnw spring-boot:run
 ```
 
-App: `http://localhost:8080` · Swagger UI: `http://localhost:8080/swagger-ui.html`
+App: `http://localhost:8080` · Web UI: `http://localhost:8080/` · Swagger UI: `http://localhost:8080/swagger-ui.html`
+
+### Web UI (Thymeleaf)
+
+Server-rendered pages backed by the same services/DTOs as the REST API:
+
+| Path | Purpose | Auth |
+|------|---------|------|
+| `/` | Landing page | public |
+| `/login` | Custom login form | public |
+| `/users`, `/users/new`, `/users/{id}/edit` | User list + create/edit forms | authenticated (delete = ADMIN) |
+| `/tasks`, `/tasks/new`, `/tasks/{id}/edit` | Task list + create/edit forms (user dropdown) | authenticated (delete = ADMIN) |
+
+- **Data binding**: forms bind `UserRequest` / `TaskRequest` via `th:object` / `th:field`;
+  `@Valid` + `BindingResult` re-render the form with inline `th:errors` on failure.
+- **CSRF** is enabled for the browser forms (Thymeleaf injects the token); the REST API
+  (`/api/**`), Actuator and the H2 console are exempt and authenticate via HTTP Basic.
+- Unauthenticated **page** requests redirect to `/login`; unauthenticated **API/Actuator**
+  requests return `401`. UI labels are localized (English / Georgian) from the message bundles.
 
 Packaged jar:
 
@@ -158,10 +177,10 @@ curl -u admin:admin123 localhost:8080/actuator/prometheus
 ./mvnw clean verify         # tests + JaCoCo coverage report
 ```
 
-JaCoCo HTML report: `target/site/jacoco/index.html`. Latest run: **90% instruction**,
-**89% line** coverage (348/390 lines).
+JaCoCo HTML report: `target/site/jacoco/index.html`. Latest run: **85% instruction**,
+**86% line** coverage (405/473 lines).
 
-**84 tests**, covering positive and negative scenarios:
+**97 tests**, covering positive and negative scenarios:
 
 | Suite | Type | Scope |
 |-------|------|-------|
@@ -169,6 +188,7 @@ JaCoCo HTML report: `target/site/jacoco/index.html`. Latest run: **90% instructi
 | `controller/UserControllerWebMvcTest` | **Web slice** (`@WebMvcTest` + MockMvc) | HTTP status/JSON, security (401 anon, 403 admin-only DELETE, 204 admin), 201 create, **parameterized** 400 validation, 404, 400 type-mismatch, 400 `@Min` path |
 | `controller/TaskControllerWebMvcTest` | **Web slice** (`@WebMvcTest` + MockMvc) | Mirrors the user slice: 401/403/204 auth, 201 create, **parameterized** 400 validation, 404, 400 type-mismatch, 400 `@Min` path |
 | `controller/AuthControllerWebMvcTest` | **Web slice** (`@WebMvcTest` + MockMvc) | `/api/me`: 401 anon, authenticated principal name + roles |
+| `web/UserViewControllerTest`, `web/TaskViewControllerTest` | **Web slice** (`@WebMvcTest` + MockMvc) | Thymeleaf UI: view resolution, model binding, validation re-render with field errors, CSRF, login redirect for anon, admin-only DELETE (403/redirect) |
 | `repository/UserRepositoryDataJpaTest`, `repository/TaskRepositoryDataJpaTest` | **Repository slice** (`@DataJpaTest`) | Persistence; User↔Task relationship + cascade/orphanRemoval; empty result for missing id |
 | `MidtermApplicationTests`, `I18nAndConfigTests`, `DevProfileTests` | **Integration** (`@SpringBootTest`) | Full-context CRUD, auth/roles, BCrypt, i18n, config injection, dev-profile seeding |
 | `ActuatorSmokeTest` | **Integration** (`@SpringBootTest`) | Actuator: public health (UP) / info, ADMIN-only metrics (403 user / 200 admin), custom `users.created` counter |

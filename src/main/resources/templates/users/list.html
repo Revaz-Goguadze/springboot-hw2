@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head(#{user.list.title})}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="container">
+    <div class="header-row">
+        <h1 th:text="#{user.list.title}">Users</h1>
+        <a class="btn" th:href="@{/users/new}" th:text="#{user.new}">New user</a>
+    </div>
+
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th th:text="#{field.name}">Name</th>
+            <th th:text="#{field.email}">Email</th>
+            <th th:text="#{table.actions}">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="u : ${users}">
+            <td th:text="${u.id}">1</td>
+            <td th:text="${u.name}">Alice</td>
+            <td th:text="${u.email}">alice@example.com</td>
+            <td class="actions">
+                <a th:href="@{/users/{id}/edit(id=${u.id})}" th:text="#{action.edit}">Edit</a>
+                <form sec:authorize="hasRole('ADMIN')" th:action="@{/users/{id}(id=${u.id})}"
+                      th:method="delete" class="inline"
+                      th:onsubmit="'return confirm(\'' + #{action.delete.confirm} + '\');'">
+                    <button type="submit" class="danger" th:text="#{action.delete}">Delete</button>
+                </form>
+            </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(users)}">
+            <td colspan="4" class="empty" th:text="#{table.empty}">No data.</td>
+        </tr>
+        </tbody>
+    </table>
+</main>
+</body>
+</html>
