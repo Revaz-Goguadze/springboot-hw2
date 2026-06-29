@@ -3,6 +3,12 @@
 <head th:replace="~{fragments/layout :: head(#{login.title})}"></head>
 <body>
 <main class="container narrow">
+    <form method="get" class="lang-form lang-form-login">
+        <select name="lang" onchange="this.form.submit()" aria-label="Language">
+            <option value="en" th:selected="${#locale.language == 'en'}">EN</option>
+            <option value="ka" th:selected="${#locale.language == 'ka'}">ქარ</option>
+        </select>
+    </form>
     <h1 th:text="#{login.title}">Sign in</h1>
 
     <p class="error" th:if="${param.error}" th:text="#{login.error}">Invalid credentials.</p>

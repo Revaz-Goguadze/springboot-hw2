@@ -142,4 +142,21 @@ class I18nAndConfigTests {
         Map<String, String> fieldErrors = (Map<String, String>) response.getBody().get("fieldErrors");
         assertThat(fieldErrors.get("userId")).isEqualTo("მომხმარებლის ID სავალდებულოა");
     }
+
+    // --- UI language switcher: ?lang=ka pins the session locale and renders Georgian ---
+
+    @Test
+    void uiLanguageSwitcherRendersGeorgian() {
+        // The home page nav is localized; ?lang=ka must flip it to Georgian in the same request.
+        ResponseEntity<String> response = rest.getForEntity("/?lang=ka", String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).contains("მთავარი"); // nav.home (ka)
+    }
+
+    @Test
+    void uiDefaultsToEnglishWithoutLangParam() {
+        ResponseEntity<String> response = rest.getForEntity("/", String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).contains(">Home<");
+    }
 }

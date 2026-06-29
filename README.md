@@ -200,13 +200,17 @@ JaCoCo HTML report: `target/site/jacoco/index.html`. Latest run: **85% instructi
 
 ## Internationalization
 
-Locale resolved per request from the `Accept-Language` header
-(`AcceptHeaderLocaleResolver`, default English). Bundles: `messages[_en|_ka].properties` (UTF-8).
-Localized: `/api/info` greeting, validation messages, and error envelopes (404/400/500).
+Locale resolution is **session-first, header-fallback** (`SessionOrHeaderLocaleResolver`,
+default English): the web UI's **EN / ქარ language switcher** (nav dropdown) pins a locale in
+the session via `?lang=en|ka` (handled by a `LocaleChangeInterceptor`), while API clients
+without a session are driven by the `Accept-Language` header. Bundles:
+`messages[_en|_ka].properties` (UTF-8). Localized: UI labels, `/api/info` greeting, validation
+messages, and error envelopes (404/400/500).
 
 ```bash
-curl -H "Accept-Language: ka" localhost:8080/api/info
+curl -H "Accept-Language: ka" localhost:8080/api/info                            # API: header-driven
 curl -u admin:admin123 -H "Accept-Language: ka" localhost:8080/api/users/99999   # localized 404
+curl "localhost:8080/?lang=ka"                                                   # UI: switcher param
 ```
 
 ---

@@ -15,6 +15,12 @@
     <a th:href="@{/tasks}" th:text="#{nav.tasks}">Tasks</a>
     <a th:href="@{/swagger-ui.html}">API</a>
     <span class="spacer"></span>
+    <form method="get" class="lang-form">
+        <select name="lang" onchange="this.form.submit()" aria-label="Language">
+            <option value="en" th:selected="${#locale.language == 'en'}">EN</option>
+            <option value="ka" th:selected="${#locale.language == 'ka'}">ქარ</option>
+        </select>
+    </form>
     <span sec:authorize="isAuthenticated()" class="who">
         <span sec:authentication="name">user</span>
     </span>
