@@ -30,7 +30,15 @@ internationalization (English / Georgian).
 
 ## Running the application
 
-Default (no profile → in-memory H2, INFO logging):
+Quickest — the helper script (dev profile, seeded H2, prints URLs + credentials):
+
+```bash
+./run.sh             # dev on :8080
+./run.sh dev 9090    # custom port
+./run.sh prod        # PostgreSQL (needs DB_URL / DB_USERNAME / DB_PASSWORD)
+```
+
+Or with Maven directly. Default (no profile → in-memory H2, INFO logging):
 
 ```bash
 ./mvnw spring-boot:run
@@ -177,10 +185,10 @@ curl -u admin:admin123 localhost:8080/actuator/prometheus
 ./mvnw clean verify         # tests + JaCoCo coverage report
 ```
 
-JaCoCo HTML report: `target/site/jacoco/index.html`. Latest run: **85% instruction**,
-**85% line** coverage (395/464 lines).
+JaCoCo HTML report: `target/site/jacoco/index.html`. Latest run: **86% instruction**,
+**86% line** coverage (406/474 lines).
 
-**99 tests**, covering positive and negative scenarios:
+**101 tests**, covering positive and negative scenarios:
 
 | Suite | Type | Scope |
 |-------|------|-------|
